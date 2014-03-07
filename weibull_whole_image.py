@@ -118,7 +118,7 @@ def linearFit(y, z):
     return zfixed
 
 
-def getR(profile, limits):
+def getRold(profile, limits):
     ''' Reads every line of z(y), eliminates slope for each line separately
         and computes the r value. Returns all results of r in one list. '''
 
@@ -158,7 +158,119 @@ def getR(profile, limits):
 
     return r_total
 
+def getR(profile, limits):
+    ''' Reads every line of z(y), eliminates slowly-changing behavior for the entire surface
+and computes the r value. Returns all results of r in one list. '''
 
+    # Fetching grid from file
+    xgrid, ygrid, zgrid = loadGrid(profile)
+
+    # Fetching dimensions of the array
+    xmax, ymax = xgrid.shape
+
+    if (limits[1] == 0):
+        limits[1] = xmax
+    if (limits[3] == 0):
+        limits[3] = ymax
+
+    # Transposing y and z, because we're doing vertical measurements
+    xT = np.transpose(xgrid)
+    yT = np.transpose(ygrid)
+    zT = np.transpose(zgrid)
+
+    # Get a smoothed version
+    x1d = xT[:,0]
+    y1d = yT[0,:]
+    zTsmooth = polysmooth(xT,yT,zT,6,6)
+    zTfixed = zT-zTsmooth
+    zfixed = np.transpose(zTfixed)
+
+    # Going through all lines
+    for i in range(limits[2], limits[3]):
+        # Selecting the i-th line from each transposed array
+        y = yT[i][limits[0]:limits[1]]
+        zTfixed_line = zTfixed[i][limits[0]:limits[1]]
+
+        # Getting the slope in every point
+        dydz = np.diff(zTfixed_line)/np.diff(y) # Note: try reversing this? dz/dy?
+        r = 1-(1/(1+dydz**2))**(0.5)
+
+        # If first line, start r_total, else append
+        if (i == limits[0]):
+            r_total = r
+        else:
+            r_total = np.concatenate((r_total, r))
+    
+    # Display the results of 1-d slices
+    Nx, Ny = np.shape(zfixed)
+    j = int(Ny/2)
+    i = int(Nx/2)
+
+    fignum = 10
+    plt.close(fignum)
+    plt.figure(fignum)
+    plt.plot(x1d,zT[:,j],x1d,zTsmooth[:,j])
+    plt.xlabel('x')
+    plt.legend(['original','smoothed'])
+    plt.show()
+
+    fignum = 11
+    plt.close(fignum)
+    plt.figure(fignum)
+    plt.plot(y1d,zT[i,:],y1d,zTsmooth[i,:])
+    plt.xlabel('z')
+    plt.legend(['original','smoothed'])
+    plt.show()
+
+    fignum = 12
+    plt.close(fignum)
+    plt.figure(fignum)
+    plt.plot(y1d,zTfixed[i,:])
+    plt.xlabel('z')
+    #plt.xlim([270, 310])
+    plt.legend(['fixed, const x'])
+    plt.show()
+
+    fignum = 13
+    plt.close(fignum)
+    plt.figure(fignum)
+    plt.plot(x1d,zTfixed[:,j])
+    plt.xlabel('x')
+    #plt.xlim([200, 240])
+    plt.legend(['fixed, const z'])
+    plt.show()
+
+
+    return r_total, zfixed, xgrid, ygrid
+
+def polysmooth(x,y,z,NI,NJ):
+
+    # size of the incoming array
+    Nx, Ny = np.shape(z)
+    x1d = x[:,0]
+    y1d = y[0,:]
+
+    # Get the C coefficients
+    #NI = 7
+    CIj = np.zeros((NI,Ny))
+    for j in range (Ny):
+        CIj[:,j] = np.flipud(np.polyfit(x1d,z[:,j],NI-1))
+
+    # Get the D coefficients
+    #NJ = 7
+    DIJ = np.zeros((NI,NJ))
+    for I in range (NI):
+        DIJ[I,:] = np.flipud(np.polyfit(y1d,CIj[I,:],NJ-1))
+    
+    # Reconstruct the entire surface
+    zsmooth = np.zeros((Nx,Ny))
+    for I in range(NI):
+        for J in range(NJ):
+            zsmooth += DIJ[I,J]*x**I*y**J
+
+    return zsmooth
+    
+    
 def getHistogram(filebase, bins, rangemax, limits):
     ''' Filebase is the name of the folder, where the CSVs are.
         Num is the number of CSVs that are to be parsed and put together.

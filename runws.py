@@ -21,7 +21,6 @@ register_path = 'C:\ice_register.csv'
 # ------ END PARAMETERS --
 
 # Get histogram for set number of bins
-#labels, values, data, zfixed, xgrid, ygrid = getHistogram2(namebase, bins, rangemax, limits)
 data, zfixed, xgrid, ygrid = ws.getR(namebase, limits)
 values, rhist = np.histogram(data, bins=bins, range=(0, rangemax),density=True)
     

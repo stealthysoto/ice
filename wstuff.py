@@ -240,7 +240,6 @@ def getR(profile, limits):
     plt.legend(['fixed, const z'])
     plt.show()
 
-
     return r_total, zfixed, xgrid, ygrid
 
 def polysmooth(x,y,z,NI,NJ):

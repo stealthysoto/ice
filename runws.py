@@ -10,10 +10,13 @@ import wstuff as ws
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
-bins = 25
+bins = 40
 rangemax = 0.25
 namebase = '1110_3d_snp9'
 namebase = '1200_3d_snp5_img' 
+namebase = '524_3d_snp1_img'
+namebase = '524_3d_snp2_img'
+namebase = '524_3d_snp3_img'
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'
@@ -51,15 +54,31 @@ eta_ret = plsq[0][1]
 print('Sigma is: '+str(sigma_ret))
 print('Eta is: '+str(eta_ret))
 
+# Setting estimated values for sigma and eta and gamma
+sigma_0 = sigma_ret
+eta_0 = eta_ret
+gamma_0 = 0
+p0 = ([sigma_0, eta_0, gamma_0])  # initial set of parameters
+plsq3 = leastsq(ws.residuals3, p0, args=(values, labels), maxfev=200)  # actual fit
+
+# Report sigma and eta and gamma in commandline
+sigma_ret3 = plsq3[0][0]
+eta_ret3 = plsq3[0][1]
+gamma_ret3 = plsq3[0][2]
+print('Sigma is: '+str(sigma_ret3))
+print('Eta is: '+str(eta_ret3))
+print('Gamma is: '+str(gamma_ret3))
+
 # Plot it (first figure)
 fignum = 1
 plt.figure(fignum)
 plt.clf()
 
 # Plot in log scale
-plt.semilogy(labels, values, labels, ws.pWeibull(labels, sigma_ret, eta_ret))
+#plt.semilogy(labels, values, labels, ws.pWeibull(labels, sigma_ret, eta_ret))
+plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3(labels, sigma_ret3, eta_ret3, gamma_ret3))
 plt.grid()
-plt.legend(('Expt', 'Best fit'))
+plt.legend(('Expt', '2-parameter', '3-parameter'))
 
 # Creating dual X axis
 ax1 = plt.subplot(111)

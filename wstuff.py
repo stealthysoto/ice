@@ -33,6 +33,16 @@ def pWeibull3(r, sigma, eta, gamma):
     return ret
 
 
+def pWeibull3b(r, sigma, eta, gamma):
+    ''' Weibull function to be fit. '''
+
+    from numpy import exp
+
+    mu = 1-r
+    ret = 2*eta/sigma**2/mu**3 * (((mu**(-2)-1)/sigma**2)**(eta-1)) * exp(-((mu**(-2)-1)/sigma**2)**eta)+gamma
+    return ret
+
+
 def residuals(p, y, r):
     ''' Error function for fitting. '''
 
@@ -53,6 +63,17 @@ def residuals3(p, y, r):
     eta = p[1]
     gamma = p[2]
     err = log(y)-log(pWeibull3(r, sigma, eta, gamma))
+    return err
+
+def residuals3b(p, y, r):
+    ''' Error function for fitting. '''
+
+    from numpy import log
+
+    sigma = p[0]
+    eta = p[1]
+    gamma = p[2]
+    err = log(y)-log(pWeibull3b(r, sigma, eta, gamma))
     return err
 
 

@@ -6,17 +6,21 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import wstuff as ws
+import wstuff as ws; reload(ws)
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
 bins = 40
 rangemax = 0.25
-namebase = '1110_3d_snp9'
-namebase = '1200_3d_snp5_img' 
+#namebase = '1110_3d_snp9'
+#namebase = '1200_3d_snp5_img' 
 namebase = '524_3d_snp1_img'
-namebase = '524_3d_snp2_img'
-namebase = '524_3d_snp3_img'
+#namebase = '524_3d_snp2_img'
+#namebase = '524_3d_snp3_img'
+#namebase = '556_3d_snp5_img'
+#namebase = '556_3d_snp6_img'
+#namebase = '556_3d_snp7_img'
+#namebase = '556_3d_snp8_img'
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'
@@ -57,9 +61,9 @@ print('Eta is: '+str(eta_ret))
 # Setting estimated values for sigma and eta and gamma
 sigma_0 = sigma_ret
 eta_0 = eta_ret
-gamma_0 = 0
+gamma_0 = 2
 p0 = ([sigma_0, eta_0, gamma_0])  # initial set of parameters
-plsq3 = leastsq(ws.residuals3, p0, args=(values, labels), maxfev=200)  # actual fit
+plsq3 = leastsq(ws.residuals3b, p0, args=(values, labels), maxfev=200)  # actual fit
 
 # Report sigma and eta and gamma in commandline
 sigma_ret3 = plsq3[0][0]
@@ -76,9 +80,9 @@ plt.clf()
 
 # Plot in log scale
 #plt.semilogy(labels, values, labels, ws.pWeibull(labels, sigma_ret, eta_ret))
-plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3(labels, sigma_ret3, eta_ret3, gamma_ret3))
+plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3))
 plt.grid()
-plt.legend(('Expt', '2-parameter', '3-parameter'))
+plt.legend(('Expt', 'W2', 'W3'))
 
 # Creating dual X axis
 ax1 = plt.subplot(111)
@@ -98,15 +102,15 @@ ax2.set_xlabel(r"$\phi$")
 ax2.set_xlim((0, rangemax))
 
 # Printing sigma and eta onto the plot
-plt.text(0.87, 0.82,
-         r'$\sigma$: %.3f $\eta$: %.3f' % (sigma_ret, eta_ret),
+plt.text(0.77, 0.65,
+         r'$\sigma$: %.3f $\eta$: %.3f $\gamma$: %.3f' % (sigma_ret3, eta_ret3, gamma_ret3),
          fontsize=12,
          horizontalalignment='center',
          verticalalignment='center',
          transform=ax1.transAxes)
 
 # Printing bins and mean onto the plot
-plt.text(0.84, 0.77,
+plt.text(0.74, 0.70,
          r'mean: %.3f bins: %i' % (total_mean, bins),
          fontsize=12,
          horizontalalignment='center',

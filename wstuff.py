@@ -224,18 +224,28 @@ def getR(profile, limits):
     # Get a smoothed version
     x1d = xT[:,0]
     y1d = yT[0,:]
+    dy = y1d[1]-y1d[0]
+    wconv = 10.0 # This should be microns
+    fNyconv = wconv/dy
+    Nyconv = int(fNyconv)
     zTsmooth = polysmooth(xT,yT,zT,6,6)
     zTfixed = zT-zTsmooth
     zfixed = np.transpose(zTfixed)
+    filt = np.ones(Nyconv)/fNyconv
+    print 'Filter width in microns = ', wconv, ' meaning filt = ', filt
 
     # Going through all lines
     for i in range(limits[2], limits[3]):
         # Selecting the i-th line from each transposed array
         y = yT[i][limits[0]:limits[1]]
         zTfixed_line = zTfixed[i][limits[0]:limits[1]]
+        
+        # Filter, perhaps
+        zTfilt = np.convolve(zTfixed_line,filt,'same')
 
         # Getting the slope in every point
-        dydz = np.diff(zTfixed_line)/np.diff(y)  # Note: try reversing this? dz/dy?
+        #dydz = np.diff(zTfixed_line)/np.diff(y)  # Note: try reversing this? dz/dy?
+        dydz = np.diff(zTfilt)/np.diff(y)  # Note: try reversing this? dz/dy?
         r = 1-(1/(1+dydz**2))**(0.5)
 
         # If first line, start r_total, else append
@@ -266,19 +276,38 @@ def getR(profile, limits):
     plt.show()
 
     fignum = 12
+    filt = np.ones(8)/8
+    zTfixed_line = zTfixed[i][limits[0]:limits[1]]
+    zTfilt = np.convolve(zTfixed_line,filt,'same')
     plt.close(fignum)
     plt.figure(fignum)
-    plt.plot(y1d,zTfixed[i,:])
+    plt.plot(y1d,zTfixed_line,y1d,zTfilt)
     plt.xlabel('z')
+    plt.ylabel('y (surface height)')
     #plt.xlim([270, 310])
     plt.legend(['fixed, const x'])
     plt.show()
 
     fignum = 13
+    dydz = np.diff(zTfixed[i,:])/np.diff(y1d)
+    theta = np.arctan(dydz)*180/np.pi
+    dydzfilt = np.diff(zTfilt)/np.diff(y1d)
+    thetafilt = np.arctan(dydzfilt)*180/np.pi
+    plt.close(fignum)
+    plt.figure(fignum)
+    plt.plot(y1d[1:],theta,y1d[1:],thetafilt)
+    plt.xlabel('z')
+    plt.ylabel('surface tilt angle')
+    #plt.xlim([200, 240])
+    plt.legend(['fixed, const z'])
+    plt.show()
+  
+    fignum = 14
     plt.close(fignum)
     plt.figure(fignum)
     plt.plot(x1d,zTfixed[:,j])
     plt.xlabel('x')
+    plt.ylabel('y (surface height)')
     #plt.xlim([200, 240])
     plt.legend(['fixed, const z'])
     plt.show()

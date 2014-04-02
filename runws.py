@@ -10,17 +10,20 @@ import wstuff as ws; reload(ws)
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
-bins = 40
-rangemax = 0.25
+bins = 20
+rangemaxdisp = 0.5
 #namebase = '1110_3d_snp9'
 #namebase = '1200_3d_snp5_img' 
-namebase = '524_3d_snp1_img'
-#namebase = '524_3d_snp2_img'
-#namebase = '524_3d_snp3_img'
-#namebase = '556_3d_snp5_img'
-#namebase = '556_3d_snp6_img'
-#namebase = '556_3d_snp7_img'
-#namebase = '556_3d_snp8_img'
+#namebase = '524_3d_snp1_img'; rangemax = 0.05
+#namebase = '524_3d_snp2_img'; rangemax = 0.05
+#namebase = '524_3d_snp3_img'; rangemax = 0.05
+#namebase = '556_3d_snp1_img'; rangemax = 0.5
+#namebase = '556_3d_snp5_img'; rangemax = 0.5
+#namebase = '556_3d_snp6_img'; rangemax = 0.5
+#namebase = '556_3d_snp7_img'; rangemax = 0.5
+namebase = '556_3d_snp8_img'; rangemax = 0.5
+#namebase = '1011_3d_snp16_img'; rangemax = 0.5
+#namebase = '1011_3d_snp17_img'; rangemax = 0.5
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'
@@ -61,9 +64,9 @@ print('Eta is: '+str(eta_ret))
 # Setting estimated values for sigma and eta and gamma
 sigma_0 = sigma_ret
 eta_0 = eta_ret
-gamma_0 = 2
+gamma_0 = 0.01
 p0 = ([sigma_0, eta_0, gamma_0])  # initial set of parameters
-plsq3 = leastsq(ws.residuals3b, p0, args=(values, labels), maxfev=200)  # actual fit
+plsq3 = leastsq(ws.residuals3, p0, args=(values, labels), maxfev=200)  # actual fit
 
 # Report sigma and eta and gamma in commandline
 sigma_ret3 = plsq3[0][0]
@@ -80,13 +83,26 @@ plt.clf()
 
 # Plot in log scale
 #plt.semilogy(labels, values, labels, ws.pWeibull(labels, sigma_ret, eta_ret))
-plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3))
+#plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3))
+plt.semilogy( \
+labels, values, 'o', \
+labels, ws.pWeibull(labels, sigma_ret, eta_ret), \
+labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3), \
+labels, ws.pWeibull(labels, sigma_ret*1.2, eta_ret), \
+labels, ws.pWeibull(labels, sigma_ret, eta_ret*.8), \
+)
 plt.grid()
+#plt.legend(('Expt', 'W2', 'W3', 'W2 w/1.2$\sigma$', 'W2 w/0.8$\eta$'))
 plt.legend(('Expt', 'W2', 'W3'))
 
 # Creating dual X axis
 ax1 = plt.subplot(111)
 ax2 = ax1.twiny()
+ax1.set_xlim((0, rangemaxdisp))
+ax2.set_xlim((0, rangemaxdisp))
+ax1.set_ylim((1e-2, 1e2))
+ax2.set_ylim((1e-2, 1e2))
+
 
 # Setting proper labels
 ax1.set_xlabel(r"$r$")
@@ -94,12 +110,11 @@ ax1.set_xlabel(r"$r$")
 # Setting up functions to convert r <---> phi
 r_to_phi = lambda x: 180*np.arccos(1-x)/np.pi
 phi_to_r = lambda x: 1 - np.cos((x*np.pi)/180)
-new_tick_locations = phi_to_r(np.array([5, 10, 15, 20, 25, 30, 35, 40]))
+new_tick_locations = phi_to_r(np.array([10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]))
 tick_function = lambda x: ["%.0f" % z for z in r_to_phi(x)]
 ax2.set_xticks(new_tick_locations)
 ax2.set_xticklabels(tick_function(new_tick_locations))
 ax2.set_xlabel(r"$\phi$")
-ax2.set_xlim((0, rangemax))
 
 # Printing sigma and eta onto the plot
 plt.text(0.77, 0.65,

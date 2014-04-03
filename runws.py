@@ -11,11 +11,11 @@ from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
 bins = 40
-rangemax = 0.25
+rangemax = 0.05
 #namebase = '1110_3d_snp9'
 #namebase = '1200_3d_snp5_img' 
-namebase = '524_3d_snp1_img'
-#namebase = '524_3d_snp2_img'
+#namebase = '524_3d_snp1_img'
+namebase = '524_3d_snp2_img'
 #namebase = '524_3d_snp3_img'
 #namebase = '556_3d_snp5_img'
 #namebase = '556_3d_snp6_img'

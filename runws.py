@@ -10,20 +10,34 @@ import wstuff as ws; reload(ws)
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
+<<<<<<< HEAD
 bins = 20
-rangemaxdisp = 0.5
+rangemaxdisp = 0.05
 #namebase = '1110_3d_snp9'
 #namebase = '1200_3d_snp5_img' 
 #namebase = '524_3d_snp1_img'; rangemax = 0.05
-#namebase = '524_3d_snp2_img'; rangemax = 0.05
+namebase = '524_3d_snp2_img'; rangemax = 0.05
 #namebase = '524_3d_snp3_img'; rangemax = 0.05
 #namebase = '556_3d_snp1_img'; rangemax = 0.5
 #namebase = '556_3d_snp5_img'; rangemax = 0.5
 #namebase = '556_3d_snp6_img'; rangemax = 0.5
 #namebase = '556_3d_snp7_img'; rangemax = 0.5
-namebase = '556_3d_snp8_img'; rangemax = 0.5
+#namebase = '556_3d_snp8_img'; rangemax = 0.5
 #namebase = '1011_3d_snp16_img'; rangemax = 0.5
 #namebase = '1011_3d_snp17_img'; rangemax = 0.5
+=======
+bins = 40
+rangemax = 0.05
+#namebase = '1110_3d_snp9'
+#namebase = '1200_3d_snp5_img' 
+#namebase = '524_3d_snp1_img'
+namebase = '524_3d_snp2_img'
+#namebase = '524_3d_snp3_img'
+#namebase = '556_3d_snp5_img'
+#namebase = '556_3d_snp6_img'
+#namebase = '556_3d_snp7_img'
+#namebase = '556_3d_snp8_img'
+>>>>>>> FETCH_HEAD
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'
@@ -88,8 +102,8 @@ plt.semilogy( \
 labels, values, 'o', \
 labels, ws.pWeibull(labels, sigma_ret, eta_ret), \
 labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3), \
-labels, ws.pWeibull(labels, sigma_ret*1.2, eta_ret), \
-labels, ws.pWeibull(labels, sigma_ret, eta_ret*.8), \
+#labels, ws.pWeibull(labels, sigma_ret*1.2, eta_ret), \
+#labels, ws.pWeibull(labels, sigma_ret, eta_ret*.8), \
 )
 plt.grid()
 #plt.legend(('Expt', 'W2', 'W3', 'W2 w/1.2$\sigma$', 'W2 w/0.8$\eta$'))

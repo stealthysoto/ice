@@ -225,7 +225,7 @@ def getR(profile, limits):
     x1d = xT[:,0]
     y1d = yT[0,:]
     dy = y1d[1]-y1d[0]
-    wconv = 10.0 # This should be microns
+    wconv = 3.0 # This should be microns
     fNyconv = wconv/dy
     Nyconv = int(fNyconv)
     zTsmooth = polysmooth(xT,yT,zT,6,6)
@@ -276,12 +276,13 @@ def getR(profile, limits):
     plt.show()
 
     fignum = 12
-    filt = np.ones(8)/8
+    filt = np.ones(Nyconv)/fNyconv
     zTfixed_line = zTfixed[i][limits[0]:limits[1]]
     zTfilt = np.convolve(zTfixed_line,filt,'same')
     plt.close(fignum)
     plt.figure(fignum)
-    plt.plot(y1d,zTfixed_line,y1d,zTfilt)
+    plt.plot(y1d,zTfixed_line)
+    plt.plot(y1d,zTfilt,linewidth=3)
     plt.xlabel('z')
     plt.ylabel('y (surface height)')
     #plt.xlim([270, 310])

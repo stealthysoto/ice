@@ -96,7 +96,7 @@ def readArray(filename, dtype, separator=','):
     return np.rec.array(data, dtype=dtype)
 
 
-def loadGrid(profile):
+def loadGrid(profile, horizontal):
     ''' Reads data from a single-image CSV file and distributes x,y,z values
         into separate arrays of picture dimensions. '''
 
@@ -112,11 +112,21 @@ def loadGrid(profile):
     Nx = (0 == data['x']).sum()  # X dimension
 
     # Reshaping into three separate fields of picture dimension
-    xgrid = data['x'].reshape(Nx, Ny)
-    ygrid = data['y'].reshape(Nx, Ny)
-    zgrid = data['z'].reshape(Nx, Ny)
 
-    return xgrid, ygrid, zgrid
+    if horizontal:
+        print horizontal
+        xgrid = data['x'].reshape(Nx, Ny)
+        ygrid = data['y'].reshape(Nx, Ny)
+        zgrid = data['z'].reshape(Nx, Ny)
+        return xgrid, ygrid, zgrid
+
+    else:
+        print horizontal
+        xgrid = data['x'].reshape(Nx, Ny).T
+        ygrid = data['y'].reshape(Nx, Ny).T
+        zgrid = data['z'].reshape(Nx, Ny).T
+        return ygrid, xgrid, zgrid
+
 
 
 def logIntoRegister(filename, data):
@@ -160,10 +170,8 @@ def linearFit(y, z):
 
     return zfixed
 
-
+'''
 def getRold(profile, limits):
-    ''' Reads every line of z(y), eliminates slope for each line separately
-        and computes the r value. Returns all results of r in one list. '''
 
     # Fetching grid from file
     xgrid, ygrid, zgrid = loadGrid(profile)
@@ -200,52 +208,98 @@ def getRold(profile, limits):
             r_total = np.concatenate((r_total, r))
 
     return r_total
+'''
 
-def getR(profile, limits):
+def getR(profile, limits, wconv, horizontal):
     ''' Reads every line of z(y), eliminates slowly-changing behavior for the entire surface
         and computes the r value. Returns all results of r in one list. '''
 
     # Fetching grid from file
-    xgrid, ygrid, zgrid = loadGrid(profile)
+    xgrid, ygrid, zgrid = loadGrid(profile, horizontal)
 
     # Fetching dimensions of the array
     xmax, ymax = xgrid.shape
+    horizontal = True
+    if horizontal:
+        if (limits[1] == 0):
+            limits[1] = xmax
+        if (limits[3] == 0):
+            limits[3] = ymax
+        xT = np.transpose(xgrid)
+        yT = np.transpose(ygrid)
+        zT = np.transpose(zgrid)
 
-    if (limits[1] == 0):
-        limits[1] = xmax
-    if (limits[3] == 0):
-        limits[3] = ymax
-
-    # Transposing y and z, because we're doing vertical measurements
-    xT = np.transpose(xgrid)
-    yT = np.transpose(ygrid)
-    zT = np.transpose(zgrid)
+    else:
+        if (limits[1] == 0):
+            limits[1] = ymax
+        if (limits[3] == 0):
+            limits[3] = xmax
+        xT = np.copy(ygrid)
+        yT = np.copy(xgrid)
+        zT = np.copy(zgrid)
 
     # Get a smoothed version
     x1d = xT[:,0]
     y1d = yT[0,:]
     dy = y1d[1]-y1d[0]
-    wconv = 3.0 # This should be microns
     fNyconv = wconv/dy
     Nyconv = int(fNyconv)
     zTsmooth = polysmooth(xT,yT,zT,6,6)
     zTfixed = zT-zTsmooth
-    zfixed = np.transpose(zTfixed)
+    Ny, Nx = np.shape(zTfixed)
     filt = np.ones(Nyconv)/fNyconv
     print 'Filter width in microns = ', wconv, ' meaning filt = ', filt
+    #print np.shape(zTfixed), Nx, Ny
 
-    # Going through all lines
+    # Going through all lines to smooth in the crystallographic z-direction
     for i in range(limits[2], limits[3]):
         # Selecting the i-th line from each transposed array
-        y = yT[i][limits[0]:limits[1]]
         zTfixed_line = zTfixed[i][limits[0]:limits[1]]
         
         # Filter, perhaps
-        zTfilt = np.convolve(zTfixed_line,filt,'same')
+        zTfilt_line = np.convolve(zTfixed_line,filt,'same')
+        #print 'zTfilt_line', np.shape(zTfilt_line)
+        #print zTfilt_line
 
+        # If first line, start zTfixed_grid, else append
+        if (i == limits[2]):
+            zTfilt = zTfilt_line
+        else:
+            zTfilt = np.concatenate((zTfilt, zTfilt_line),axis=0)
+    zTfilt = zTfilt.reshape(Ny,Nx)
+    #print np.shape(zTfilt)
+    
+    # Going through all lines to smooth in the crystallographic x-direction
+    for j in range(limits[0], limits[1]):
+        # Selecting the i-th line from each transposed array
+        #zTfixed_line = zTfilt[limits[2]:limits[3]][j]
+        zTfixed_line = zTfilt[limits[2]:limits[3],j]
+        #print limits[2],limits[3],np.shape(zTfixed_line)
+        
+        # Filter, perhaps
+        zTfilt_line = np.convolve(zTfixed_line,filt,'same')
+        #print 'zTfilt_line', np.shape(zTfilt_line)
+        #print zTfilt_line
+
+        # If first line, start zTfixed_grid, else append
+        if (j == limits[0]):
+            zTfilt2 = zTfilt_line
+        else:
+            zTfilt2 = np.concatenate((zTfilt2, zTfilt_line),axis=0)
+
+    #print np.shape(zTfilt)
+    zTfilt3 = zTfilt2.reshape(Nx,Ny).T
+    #print np.shape(zTfilt2), np.shape(zTfilt3)
+
+    # Going through all lines to get roughness
+    for i in range(limits[2], limits[3]):
+        # Selecting the i-th line from each transposed array
+        y = yT[i][limits[0]:limits[1]]
+        zTfilt_line = zTfilt3[i][limits[0]:limits[1]]
+        
         # Getting the slope in every point
         #dydz = np.diff(zTfixed_line)/np.diff(y)  # Note: try reversing this? dz/dy?
-        dydz = np.diff(zTfilt)/np.diff(y)  # Note: try reversing this? dz/dy?
+        dydz = np.diff(zTfilt_line)/np.diff(y)  # Note: try reversing this? dz/dy?
         r = 1-(1/(1+dydz**2))**(0.5)
 
         # If first line, start r_total, else append
@@ -255,16 +309,15 @@ def getR(profile, limits):
             r_total = np.concatenate((r_total, r))
     
     # Display the results of 1-d slices
-    Nx, Ny = np.shape(zfixed)
-    j = int(Ny/2)
-    i = int(Nx/2)
+    i = int(Ny/2); print Ny, i
+    j = int(Nx/2); print Nx, j
 
     fignum = 10
     plt.close(fignum)
     plt.figure(fignum)
     plt.plot(x1d,zT[:,j],x1d,zTsmooth[:,j])
     plt.xlabel('x')
-    plt.legend(['original','smoothed'])
+    plt.legend(['original','tilt removed'])
     plt.show()
 
     fignum = 11
@@ -272,48 +325,48 @@ def getR(profile, limits):
     plt.figure(fignum)
     plt.plot(y1d,zT[i,:],y1d,zTsmooth[i,:])
     plt.xlabel('z')
-    plt.legend(['original','smoothed'])
+    plt.legend(['original','tilt removed'])
     plt.show()
 
     fignum = 12
-    filt = np.ones(Nyconv)/fNyconv
-    zTfixed_line = zTfixed[i][limits[0]:limits[1]]
-    zTfilt = np.convolve(zTfixed_line,filt,'same')
+    zTfixed_line = zTfixed[i,limits[0]:limits[1]]
+    zTfilt_line = zTfilt3[i,limits[0]:limits[1]]
     plt.close(fignum)
     plt.figure(fignum)
     plt.plot(y1d,zTfixed_line)
-    plt.plot(y1d,zTfilt,linewidth=3)
+    plt.plot(y1d,zTfilt_line,linewidth=3)
     plt.xlabel('z')
     plt.ylabel('y (surface height)')
-    #plt.xlim([270, 310])
-    plt.legend(['fixed, const x'])
+    plt.legend(['fixed', 'filtered'])
     plt.show()
 
     fignum = 13
-    dydz = np.diff(zTfixed[i,:])/np.diff(y1d)
-    theta = np.arctan(dydz)*180/np.pi
-    dydzfilt = np.diff(zTfilt)/np.diff(y1d)
-    thetafilt = np.arctan(dydzfilt)*180/np.pi
+    dydz_fixed = np.diff(zTfixed_line)/np.diff(y1d); theta_fixed = np.arctan(dydz_fixed)*180/np.pi
+    dydz_filt = np.diff(zTfilt_line)/np.diff(y1d); theta_filt = np.arctan(dydz_filt)*180/np.pi
     plt.close(fignum)
     plt.figure(fignum)
-    plt.plot(y1d[1:],theta,y1d[1:],thetafilt)
+    plt.plot(y1d[1:],theta_fixed,y1d[1:],theta_filt)
     plt.xlabel('z')
     plt.ylabel('surface tilt angle')
-    #plt.xlim([200, 240])
-    plt.legend(['fixed, const z'])
+    plt.legend(['fixed', 'filtered'])
     plt.show()
-  
+    
     fignum = 14
+    zTfixed_line = zTfixed[limits[2]:limits[3],j]
+    zTfilt_line = zTfilt3[limits[2]:limits[3],j]
     plt.close(fignum)
     plt.figure(fignum)
-    plt.plot(x1d,zTfixed[:,j])
+    plt.plot(x1d,zTfixed_line)
+    plt.plot(x1d,zTfilt_line,linewidth=3)
     plt.xlabel('x')
     plt.ylabel('y (surface height)')
-    #plt.xlim([200, 240])
-    plt.legend(['fixed, const z'])
+    plt.legend(['fixed', 'filtered'])
     plt.show()
-
-    return r_total, zfixed, xgrid, ygrid
+    
+    
+    #zfilt = np.transpose(zTfilt)
+    zfilt3 = np.transpose(zTfilt3)
+    return r_total, zfilt3, xgrid, ygrid
 
 def polysmooth(x,y,z,NI,NJ):
 

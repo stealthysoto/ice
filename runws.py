@@ -10,13 +10,14 @@ import wstuff as ws; reload(ws)
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
-<<<<<<< HEAD
+#<<<<<<< HEAD
 bins = 20
-rangemaxdisp = 0.05
+rangemaxdisp = 0.5
+horizontal = True
 #namebase = '1110_3d_snp9'
 #namebase = '1200_3d_snp5_img' 
 #namebase = '524_3d_snp1_img'; rangemax = 0.05
-namebase = '524_3d_snp2_img'; rangemax = 0.05
+#namebase = '524_3d_snp2_img'; rangemax = 0.05
 #namebase = '524_3d_snp3_img'; rangemax = 0.05
 #namebase = '556_3d_snp1_img'; rangemax = 0.5
 #namebase = '556_3d_snp5_img'; rangemax = 0.5
@@ -25,19 +26,9 @@ namebase = '524_3d_snp2_img'; rangemax = 0.05
 #namebase = '556_3d_snp8_img'; rangemax = 0.5
 #namebase = '1011_3d_snp16_img'; rangemax = 0.5
 #namebase = '1011_3d_snp17_img'; rangemax = 0.5
-=======
-bins = 40
-rangemax = 0.05
-#namebase = '1110_3d_snp9'
-#namebase = '1200_3d_snp5_img' 
-#namebase = '524_3d_snp1_img'
-namebase = '524_3d_snp2_img'
-#namebase = '524_3d_snp3_img'
-#namebase = '556_3d_snp5_img'
-#namebase = '556_3d_snp6_img'
-#namebase = '556_3d_snp7_img'
-#namebase = '556_3d_snp8_img'
->>>>>>> FETCH_HEAD
+#namebase =  '6-06-2014_ice2_ROTATED'; rangemax = 0.05
+namebase =  '6-06-2014_ice2'; rangemax = 0.01; horizontal = False
+#=======
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'
@@ -45,7 +36,7 @@ register_path = 'C:\ice_register.csv'
 # ------ END PARAMETERS --
 
 # Get histogram for set number of bins
-data, zfixed, xgrid, ygrid = ws.getR(namebase, limits)
+data, zfilt, xgrid, ygrid = ws.getR(namebase, limits, 3, horizontal)
 values, rhist = np.histogram(data, bins=bins, range=(0, rangemax),density=True)
     
 # If there are gaps, find the maximum possible number of bins to not get them
@@ -64,7 +55,7 @@ print("Completed histogram from "+str(data.size)+" r values.")
 print("The total mean is: "+str(total_mean)+".")
 
 # Setting estimated values for sigma and eta
-sigma_0 = .2
+sigma_0 = .01
 eta_0 = 1.0
 p0 = ([sigma_0, eta_0])  # initial set of parameters
 plsq = leastsq(ws.residuals, p0, args=(values, labels), maxfev=200)  # actual fit
@@ -94,10 +85,6 @@ print('Gamma is: '+str(gamma_ret3))
 fignum = 1
 plt.figure(fignum)
 plt.clf()
-
-# Plot in log scale
-#plt.semilogy(labels, values, labels, ws.pWeibull(labels, sigma_ret, eta_ret))
-#plt.semilogy(labels, values, 'o', labels, ws.pWeibull(labels, sigma_ret, eta_ret), labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3))
 plt.semilogy( \
 labels, values, 'o', \
 labels, ws.pWeibull(labels, sigma_ret, eta_ret), \
@@ -107,7 +94,8 @@ labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3), \
 )
 plt.grid()
 #plt.legend(('Expt', 'W2', 'W3', 'W2 w/1.2$\sigma$', 'W2 w/0.8$\eta$'))
-plt.legend(('Expt', 'W2', 'W3'))
+#plt.legend(('Expt', 'W2', 'W3'))
+plt.legend(('Expt', 'W2'))
 
 # Creating dual X axis
 ax1 = plt.subplot(111)
@@ -150,6 +138,22 @@ plt.show()
 # Saving figure to disk
 plt.savefig(namebase+'weib_comp.png', dpi=100)
 
+# Plot in linear scale
+fignum = 3
+plt.figure(fignum)
+plt.clf()
+plt.plot( \
+labels, values, 'o', \
+labels, ws.pWeibull(labels, sigma_ret, eta_ret), \
+labels, ws.pWeibull3b(labels, sigma_ret3, eta_ret3, gamma_ret3), \
+)
+plt.grid()
+plt.legend(('Expt', 'W2'))
+plt.show()
+
+
+
+
 # If asked to, log into register
 if (log_into_register):
     ws.logIntoRegister(register_path,
@@ -159,13 +163,13 @@ if (log_into_register):
 # Display results as a mesh
 fignum += 1
 plt.close(fignum)
-Nx, Ny = np.shape(zfixed)
+Nx, Ny = np.shape(zfilt)
 i = int(Nx/2)
 j = int(Ny/2)
-x1=i-20; x2=i+20; y1=j-20; y2=j+20
+x1=i-30; x2=i+30; y1=j-30; y2=j+30
 ax = plt.figure(fignum).gca(projection='3d') # Set up a three dimensional graphics window 
-ax.plot_surface(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfixed[y1:y2,x1:x2],rstride=1,cstride=1) # Make the mesh plot
-#ax.plot_wireframe(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfixed[y1:y2,x1:x2],rstride=1,cstride=1) # Make the mesh plot
+ax.plot_surface(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfilt[y1:y2,x1:x2],rstride=1,cstride=1) # Make the mesh plot
+#ax.plot_wireframe(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfilt[y1:y2,x1:x2],rstride=1,cstride=1) # Make the mesh plot
 ax.set_xlabel('x ($\mu$m)') # Label axes
 ax.set_ylabel('z ($\mu$m)')
 ax.set_zlabel('y ($\mu$m)')
@@ -174,7 +178,7 @@ plt.show()
 # Saving figure to disk
 plt.savefig(namebase+'surface.png', dpi=200)
 
-#plt.pcolor(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfixed[y1:y2,x1:x2])
+#plt.pcolor(xgrid[y1:y2,x1:x2],ygrid[y1:y2,x1:x2],zfilt[y1:y2,x1:x2])
 #plt.colorbar()
 #plt.title("After subtracting baseline")
 #plt.xlabel('x')

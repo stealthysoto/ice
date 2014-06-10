@@ -10,25 +10,33 @@ import wstuff as ws; reload(ws)
 from scipy.optimize import leastsq
 
 # -- BEGIN PARAMETERS ----
+<<<<<<< HEAD
 #<<<<<<< HEAD
 bins = 20
 rangemaxdisp = 0.5
 horizontal = True
+=======
+bins = 20
+rangemaxdisp = 0.5
+>>>>>>> FETCH_HEAD
 #namebase = '1110_3d_snp9'
 #namebase = '1200_3d_snp5_img' 
 #namebase = '524_3d_snp1_img'; rangemax = 0.05
 #namebase = '524_3d_snp2_img'; rangemax = 0.05
 #namebase = '524_3d_snp3_img'; rangemax = 0.05
-#namebase = '556_3d_snp1_img'; rangemax = 0.5
-#namebase = '556_3d_snp5_img'; rangemax = 0.5
+#namebase = '556_3d_snp1_img'; rangemax = 0.2 #(do this one)
+#namebase = '556_3d_snp5_img'; rangemax = 0.2 #(also this)
 #namebase = '556_3d_snp6_img'; rangemax = 0.5
 #namebase = '556_3d_snp7_img'; rangemax = 0.5
-#namebase = '556_3d_snp8_img'; rangemax = 0.5
+namebase = '556_3d_snp8_img'; rangemax = 0.5 #(and this)
 #namebase = '1011_3d_snp16_img'; rangemax = 0.5
 #namebase = '1011_3d_snp17_img'; rangemax = 0.5
+<<<<<<< HEAD
 #namebase =  '6-06-2014_ice2_ROTATED'; rangemax = 0.05
 namebase =  '6-06-2014_ice2'; rangemax = 0.01; horizontal = False
 #=======
+=======
+>>>>>>> FETCH_HEAD
 limits = [0, 0, 0, 0]  # [x_min, x_max, y_min, y_max], if max=0: no limit
 log_into_register = False  # Turn on/off if results should be logged
 register_path = 'C:\ice_register.csv'

@@ -242,6 +242,10 @@ def getR(profile, limits, wconv, horizontal):
     x1d = xT[:,0]
     y1d = yT[0,:]
     dy = y1d[1]-y1d[0]
+<<<<<<< HEAD
+=======
+    wconv = 5.0 # This should be microns
+>>>>>>> FETCH_HEAD
     fNyconv = wconv/dy
     Nyconv = int(fNyconv)
     zTsmooth = polysmooth(xT,yT,zT,6,6)
